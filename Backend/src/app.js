@@ -34,7 +34,7 @@ app.use((err, req, res, next) => {
 
 <<<<<<< HEAD
 // Export default for local
-export default app;
+// export default app;
 
 // ✅ If using Vercel serverless:
 // export const handler = serverless(app);
