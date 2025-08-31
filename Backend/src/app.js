@@ -32,8 +32,12 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: "Internal Server Error", error: err.message });
 });
 
+<<<<<<< HEAD
 // Export default for local
 export default app;
 
 // ✅ If using Vercel serverless:
 // export const handler = serverless(app);
+=======
+export const handler = serverless(app);
+>>>>>>> 32992726a0df5843c4bbfbcc5eb7bc233487a694
