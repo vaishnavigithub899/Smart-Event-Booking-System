@@ -11,6 +11,7 @@ export default function AdminDashboard() {
   });
   const [bookings, setBookings] = useState([]);
   const [hasBookingsApi, setHasBookingsApi] = useState(true);
+  const [status, setStatus] = useState("");
 
   async function loadEvents() {
     const token = localStorage.getItem("token");
@@ -51,19 +52,50 @@ export default function AdminDashboard() {
   }
 
   async function save() {
-    const token = localStorage.getItem("token");
-    if (editingId) await api.put(`/events/${editingId}`, form, { headers: { Authorization: `Bearer ${token}` } });
-    else await api.post("/events", form, { headers: { Authorization: `Bearer ${token}` } });
+  const token = localStorage.getItem("token");
+  try {
+    let updatedEvent;
+    if (editingId) {
+      const { data } = await api.put(`/events/${editingId}`, form, { headers: { Authorization: `Bearer ${token}` } });
+      updatedEvent = data;
+
+      // Update events state locally
+      setEvents(events.map(ev => ev.id === editingId ? updatedEvent : ev));
+      setStatus("🎉 Event updated!");
+    } else {
+      const { data } = await api.post("/events", form, { headers: { Authorization: `Bearer ${token}` } });
+      updatedEvent = data;
+
+      // Add new event to state
+      setEvents([updatedEvent, ...events]);
+      setStatus("🎉 Event created!");
+    }
+
+    // Reset form
     setEditingId(null);
     setForm({ title:"", description:"", location:"", date:"", total_seats:50, available_seats:50, price:499 });
-    loadEvents();
+
+    // Clear status after 2s
+    setTimeout(() => setStatus(""), 2000);
+
+  } catch(err) {
+    console.error(err);
+    setStatus("❌ Failed to save event");
   }
+}
 
   async function remove(id) {
     if (!confirm("Delete this event?")) return;
     const token = localStorage.getItem("token");
-    await api.delete(`/events/${id}`, { headers: { Authorization: `Bearer ${token}` } });
-    loadEvents();
+    try {
+      await api.delete(`/events/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      loadEvents();
+      setStatus("🗑️ Event deleted!");
+      setTimeout(() => setStatus(""), 2000);
+    } catch(err) {
+      console.error(err);
+      setStatus("❌ Failed to delete event");
+    }
   }
 
   return (
@@ -89,6 +121,9 @@ export default function AdminDashboard() {
           <h2 className="text-2xl font-bold mb-5 uppercase tracking-wider">
             {editingId ? "🎶 Edit Event" : "🔥 Create Event"}
           </h2>
+
+          {status && <p className="text-green-600 font-medium mb-2">{status}</p>}
+
           <div className="flex flex-col gap-4">
             <input className="input rounded-xl focus:ring-2 focus:ring-black/60" placeholder="Title" value={form.title} onChange={e=>setForm({...form, title:e.target.value})}/>
             <textarea className="input rounded-xl h-24 focus:ring-2 focus:ring-black/60" placeholder="Description" value={form.description} onChange={e=>setForm({...form, description:e.target.value})}/>
@@ -100,10 +135,24 @@ export default function AdminDashboard() {
               <input className="input rounded-xl" type="number" placeholder="Price" value={form.price} onChange={e=>setForm({...form, price:Number(e.target.value)})}/>
             </div>
             <div className="flex gap-3 mt-4">
-              <button className="btn btn-primary flex-1 text-lg py-2 hover:scale-105 transition-transform">
+              <button
+                onClick={save}
+                className="btn btn-primary flex-1 text-lg py-2 hover:scale-105 transition-transform"
+              >
                 {editingId ? "Update 🎧" : "Create 🎵"}
               </button>
-              {editingId && <button className="btn flex-1 py-2 hover:scale-105 transition-transform" onClick={()=>{setEditingId(null); setForm({title:"",description:"",location:"",date:"",total_seats:50,available_seats:50,price:499});}}>Cancel</button>}
+
+              {editingId && (
+                <button
+                  className="btn flex-1 py-2 hover:scale-105 transition-transform"
+                  onClick={()=>{
+                    setEditingId(null);
+                    setForm({ title:"", description:"", location:"", date:"", total_seats:50, available_seats:50, price:499 });
+                  }}
+                >
+                  Cancel
+                </button>
+              )}
             </div>
           </div>
         </motion.div>

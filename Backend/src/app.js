@@ -1,4 +1,3 @@
-// src/app.js
 import express from "express";
 import cors from "cors";
 import eventsRouter from "./routes/events.routes.js";
@@ -9,16 +8,14 @@ const app = express();
 
 // ✅ CORS setup
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-  ],
+  origin: process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(",")
+    : ["http://localhost:5173"], // frontend URL allow
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
 
-// ---------------------------
-// Normal JSON parsing (other routes)
-// ---------------------------
+// ✅ JSON parsing
 app.use(express.json());
 
 // ✅ Routes
@@ -29,6 +26,12 @@ app.use("/", authRouter);
 // ✅ Health check
 app.get("/", (req, res) => {
   res.json({ message: "🚀 Smart Event Booking API running" });
+});
+
+// ✅ Global error handler
+app.use((err, req, res, next) => {
+  console.error("🔥 Server error:", err);
+  res.status(500).json({ message: "Internal Server Error", error: err.message });
 });
 
 export default app;
