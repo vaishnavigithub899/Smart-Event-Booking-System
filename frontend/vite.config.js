@@ -8,6 +8,10 @@ export default defineConfig({
     tailwindcss(),
     react()
   ],
+  build: {
+    outDir: 'dist'
+  },
+  base: './',   // ✅ ye line add karo
 })
 
 
