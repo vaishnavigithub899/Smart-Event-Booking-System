@@ -52,37 +52,29 @@ export default function AdminDashboard() {
   }
 
   async function save() {
-  const token = localStorage.getItem("token");
-  try {
-    let updatedEvent;
-    if (editingId) {
-      const { data } = await api.put(`/events/${editingId}`, form, { headers: { Authorization: `Bearer ${token}` } });
-      updatedEvent = data;
+    const token = localStorage.getItem("token");
+    try {
+      if (editingId) {
+        await api.put(`/events/${editingId}`, form, { headers: { Authorization: `Bearer ${token}` } });
+        setStatus("🎉 Event updated!");
+      } else {
+        await api.post("/events", form, { headers: { Authorization: `Bearer ${token}` } });
+        setStatus("🎉 Event created!");
+      }
 
-      // Update events state locally
-      setEvents(events.map(ev => ev.id === editingId ? updatedEvent : ev));
-      setStatus("🎉 Event updated!");
-    } else {
-      const { data } = await api.post("/events", form, { headers: { Authorization: `Bearer ${token}` } });
-      updatedEvent = data;
+      // Reload events & reset form
+      loadEvents();
+      setEditingId(null);
+      setForm({ title:"", description:"", location:"", date:"", total_seats:50, available_seats:50, price:499 });
 
-      // Add new event to state
-      setEvents([updatedEvent, ...events]);
-      setStatus("🎉 Event created!");
+      // Clear status after 2s
+      setTimeout(() => setStatus(""), 2000);
+
+    } catch(err) {
+      console.error(err);
+      setStatus("❌ Failed to save event");
     }
-
-    // Reset form
-    setEditingId(null);
-    setForm({ title:"", description:"", location:"", date:"", total_seats:50, available_seats:50, price:499 });
-
-    // Clear status after 2s
-    setTimeout(() => setStatus(""), 2000);
-
-  } catch(err) {
-    console.error(err);
-    setStatus("❌ Failed to save event");
   }
-}
 
   async function remove(id) {
     if (!confirm("Delete this event?")) return;
