@@ -9,51 +9,70 @@ export default function EventDetails() {
   const nav = useNavigate();
 
   async function load() {
-    const { data } = await api.get(`/events/${id}`);
-    setEv(data);
+    try {
+      const { data } = await api.get(`/events/${id}`);
+      setEv(data);
+    } catch (err) {
+      console.error("Failed to load event", err);
+    }
   }
+
   useEffect(() => { load(); }, [id]);
 
-  if (!ev) return null;
+  if (!ev) return <p className="text-center py-10 text-gray-500">Loading event...</p>;
 
   const mapsUrl = `https://www.google.com/maps?q=${encodeURIComponent(ev.location)}&output=embed`;
 
   return (
     <div className="container py-12">
-      <Link to="/events" className="text-sm text-blue-600 hover:underline">← Back to events</Link>
+      {/* Back link */}
+      <Link 
+        to="/events" 
+        className="inline-block mb-6 text-sm font-medium text-indigo-600 hover:underline"
+      >
+        ← Back to Events
+      </Link>
 
-      <div className="grid md:grid-cols-2 gap-8 mt-6">
-        {/* Event Details Card */}
-        <div className="card p-8 bg-white shadow-xl rounded-3xl border border-gray-200 flex flex-col justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2 text-pink-600">{ev.title}</h1>
-            <p className="text-gray-700 mb-4">{ev.location} • {new Date(ev.date).toLocaleString()}</p>
-            <p className="mb-4">{ev.description}</p>
-            <p className="font-semibold text-lg mb-2 text-green-600">Price: ₹ {ev.price}</p>
-            <p className="text-sm text-gray-600 mb-4">Available seats: {ev.available_seats}</p>
+      <div className="grid md:grid-cols-2 gap-8">
+        
+        {/* Left Side - Event Info */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+          <h1 className="text-3xl font-bold text-indigo-700 mb-2">{ev.title}</h1>
+          <p className="text-gray-500 mb-4">
+            {ev.location} • {new Date(ev.date).toLocaleString()}
+          </p>
+
+          <p className="text-gray-700 leading-relaxed mb-6">{ev.description}</p>
+
+          <div className="space-y-2 mb-6">
+            <p className="text-lg font-semibold text-green-600">₹ {ev.price}</p>
+            <p className="text-sm text-gray-600">
+              Available Seats: {ev.available_seats}
+            </p>
           </div>
 
-          <div className="flex items-center gap-3 mt-4">
+          {/* Quantity + Checkout */}
+          <div className="flex items-center gap-4">
             <input
               type="number"
-              className="input w-32 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-300"
               min={1}
               max={ev.available_seats}
               value={qty}
-              onChange={e=>setQty(Number(e.target.value))}
+              onChange={e => setQty(Number(e.target.value))}
+              className="w-20 px-3 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-400"
             />
             <button
               onClick={() => nav(`/checkout/${id}?qty=${qty}`)}
-              className="btn btn-primary px-6 py-2"
+              className="bg-indigo-600 text-white px-6 py-2 rounded-xl shadow hover:bg-indigo-700 transition disabled:opacity-50"
               disabled={!ev.available_seats}
             >
-              Proceed to Checkout
+              Book Now
             </button>
           </div>
         </div>
 
-        {/* Map Card */}
-        <div className="card rounded-3xl overflow-hidden shadow-xl border border-gray-200">
+        {/* Right Side - Map */}
+        <div className="rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
           <iframe
             title="map"
             src={mapsUrl}
